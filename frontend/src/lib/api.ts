@@ -5,10 +5,11 @@ export interface Job {
   title: string
   company: string
   location: string | null
-  source: "linkedin" | "indeed" | "kariyer"
+  source: string
   url: string
   description: string | null
   date_posted: string | null
+  deadline: string | null
   company_size: string | null
   keywords: string | null
   status: string

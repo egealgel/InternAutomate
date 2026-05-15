@@ -28,11 +28,13 @@ def _date_from_filter(date_filter: str | None) -> str | None:
 
 @bp.route("/jobs")
 def jobs_list():
+    hide_expired = request.args.get("hide_expired", "true").lower() != "false"
     result = get_jobs(
         status=request.args.get("status") or None,
         source=request.args.get("source") or None,
         q=request.args.get("q") or None,
         date_from=_date_from_filter(request.args.get("date_filter")),
+        hide_expired=hide_expired,
         page=max(1, int(request.args.get("page", 1))),
         per_page=int(request.args.get("per_page", 50)),
     )
@@ -40,6 +42,7 @@ def jobs_list():
         source=request.args.get("source") or None,
         q=request.args.get("q") or None,
         date_from=_date_from_filter(request.args.get("date_filter")),
+        hide_expired=hide_expired,
     )
     result["statuses"] = STATUSES
     return jsonify(result)
@@ -126,6 +129,7 @@ def scrape_run():
                 "location": listing.location, "source": listing.source,
                 "url": listing.url, "description": listing.description,
                 "date_posted": listing.date_posted, "company_size": listing.company_size,
+                "deadline": listing.deadline,
                 "keywords": keywords,
             })
             if inserted:

@@ -80,6 +80,15 @@ export default function JobDetail() {
               {job.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{job.location}</span>}
               <SourceBadge source={job.source} />
               {job.date_posted && <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />İlan: {job.date_posted}</span>}
+              {job.deadline && (
+                <span className={`flex items-center gap-1 font-medium ${
+                  job.deadline < new Date().toISOString().slice(0, 10) ? "text-red-400" : "text-orange-400"
+                }`}>
+                  <Calendar className="h-3.5 w-3.5" />
+                  Son başvuru: {job.deadline}
+                  {job.deadline < new Date().toISOString().slice(0, 10) && " (Süresi doldu)"}
+                </span>
+              )}
               {job.keywords && <span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />"{job.keywords}"</span>}
             </div>
 

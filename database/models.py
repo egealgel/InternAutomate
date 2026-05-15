@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     keywords     TEXT,
     status       TEXT NOT NULL DEFAULT 'New',
     notes        TEXT,
+    deadline     TEXT,
     date_found   TEXT NOT NULL,
     date_updated TEXT NOT NULL
 );

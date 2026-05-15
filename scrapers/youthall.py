@@ -52,7 +52,7 @@ class YouthallScraper(BaseScraper):
             company = logo.get("alt", "").replace(" logo", "") if logo else "Bilinmiyor"
 
             location = None
-            date_posted = None
+            deadline_raw = None
             for tag in card.select(".jobs-tag"):
                 icon = tag.find("i")
                 if not icon:
@@ -62,7 +62,13 @@ class YouthallScraper(BaseScraper):
                 if "map-marker" in icon_cls:
                     location = text
                 elif "clock" in icon_cls:
-                    date_posted = text
+                    deadline_raw = text  # format: DD.MM.YYYY
+
+            # DD.MM.YYYY → YYYY-MM-DD
+            deadline = None
+            if deadline_raw and len(deadline_raw) == 10 and deadline_raw[2] == ".":
+                parts = deadline_raw.split(".")
+                deadline = f"{parts[2]}-{parts[1]}-{parts[0]}"
 
             desc_el = card.select_one(".jobs-content-desc")
             description = desc_el.get_text(strip=True) if desc_el else None
@@ -74,8 +80,8 @@ class YouthallScraper(BaseScraper):
                     url=href,
                     source="youthall",
                     location=location,
-                    date_posted=date_posted,
                     description=description,
+                    deadline=deadline,
                 )
             )
         return jobs

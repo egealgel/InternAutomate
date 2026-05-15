@@ -29,10 +29,10 @@ def insert_job(job: Dict[str, Any]) -> bool:
     sql = """
         INSERT OR IGNORE INTO jobs
             (title, company, location, source, url, description,
-             date_posted, company_size, keywords, status, date_found, date_updated)
+             date_posted, company_size, keywords, status, deadline, date_found, date_updated)
         VALUES
             (:title, :company, :location, :source, :url, :description,
-             :date_posted, :company_size, :keywords, 'New', :date_found, :date_updated)
+             :date_posted, :company_size, :keywords, 'New', :deadline, :date_found, :date_updated)
     """
     now = _now()
     job.setdefault("date_found", now)
@@ -42,6 +42,7 @@ def insert_job(job: Dict[str, Any]) -> bool:
     job.setdefault("company_size", None)
     job.setdefault("location", None)
     job.setdefault("keywords", None)
+    job.setdefault("deadline", None)
     with get_db() as conn:
         cursor = conn.execute(sql, job)
         conn.commit()
@@ -53,6 +54,7 @@ def get_jobs(
     source: Optional[str] = None,
     q: Optional[str] = None,
     date_from: Optional[str] = None,
+    hide_expired: bool = True,
     page: int = 1,
     per_page: int = 50,
 ) -> Dict[str, Any]:
@@ -72,6 +74,16 @@ def get_jobs(
     if date_from:
         conditions.append("date_found >= ?")
         params.append(date_from)
+    if hide_expired:
+        today = datetime.now(timezone.utc).date().isoformat()
+        # deadline varsa ve geçmişse gizle
+        # deadline yoksa linkedin için 60 günden eski ilanları gizle
+        conditions.append(
+            "(deadline >= ? "
+            " OR (deadline IS NULL AND (source != 'linkedin' OR date_posted IS NULL OR date_posted >= date(?, '-60 days')))"
+            ")"
+        )
+        params.extend([today, today])
 
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     count_sql = f"SELECT COUNT(*) FROM jobs {where}"
@@ -129,6 +141,7 @@ def get_status_counts(
     source: Optional[str] = None,
     q: Optional[str] = None,
     date_from: Optional[str] = None,
+    hide_expired: bool = True,
 ) -> Dict[str, int]:
     conditions: List[str] = []
     params: List[Any] = []
@@ -142,6 +155,14 @@ def get_status_counts(
     if date_from:
         conditions.append("date_found >= ?")
         params.append(date_from)
+    if hide_expired:
+        today = datetime.now(timezone.utc).date().isoformat()
+        conditions.append(
+            "(deadline >= ? "
+            " OR (deadline IS NULL AND (source != 'linkedin' OR date_posted IS NULL OR date_posted >= date(?, '-60 days')))"
+            ")"
+        )
+        params.extend([today, today])
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     with get_db() as conn:
         rows = conn.execute(

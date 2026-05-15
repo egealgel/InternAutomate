@@ -13,6 +13,7 @@ class JobListing:
     description: Optional[str] = None
     date_posted: Optional[str] = None
     company_size: Optional[str] = None
+    deadline: Optional[str] = None  # YYYY-MM-DD son başvuru tarihi
 
 
 class BaseScraper(ABC):

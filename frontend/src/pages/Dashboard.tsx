@@ -23,11 +23,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  const q          = searchParams.get("q") ?? ""
-  const status     = searchParams.get("status") ?? ""
-  const source     = searchParams.get("source") ?? ""
-  const dateFilter = searchParams.get("date_filter") ?? ""
-  const page       = Number(searchParams.get("page") ?? 1)
+  const q           = searchParams.get("q") ?? ""
+  const status      = searchParams.get("status") ?? ""
+  const source      = searchParams.get("source") ?? ""
+  const dateFilter  = searchParams.get("date_filter") ?? ""
+  const hideExpired = searchParams.get("hide_expired") !== "false"
+  const page        = Number(searchParams.get("page") ?? 1)
 
   const [searchInput, setSearchInput] = useState(q)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -62,7 +63,7 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setData(await api.getJobs({ q, status, source, date_filter: dateFilter, page }))
+      setData(await api.getJobs({ q, status, source, date_filter: dateFilter, hide_expired: hideExpired ? "true" : "false", page }))
     } finally {
       setLoading(false)
     }
@@ -70,6 +71,14 @@ export default function Dashboard() {
 
   useEffect(() => { load() }, [load])
   useEffect(() => { setSearchInput(q) }, [q])
+
+  const toggleHideExpired = () =>
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set("hide_expired", hideExpired ? "false" : "true")
+      next.delete("page")
+      return next
+    })
 
   const handleDelete = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
@@ -137,6 +146,19 @@ export default function Dashboard() {
           <option value="30d">Son 30 gün</option>
         </select>
 
+        <button
+          onClick={toggleHideExpired}
+          className={`flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border transition-colors ${
+            hideExpired
+              ? "border-orange-700 text-orange-400 bg-orange-950"
+              : "border-gray-700 text-gray-500 hover:text-gray-300"
+          }`}
+          style={hideExpired ? {} : { background: "#161b22" }}
+          title="Son başvuru tarihi geçmiş ilanları gizle/göster"
+        >
+          {hideExpired ? "⏳ Süresi dolmuşlar gizli" : "⏳ Tümünü göster"}
+        </button>
+
         {(q || status || source || dateFilter) && (
           <button onClick={() => setSearchParams({})} className="text-sm text-gray-500 hover:text-gray-300 underline">
             Temizle
@@ -176,7 +198,7 @@ export default function Dashboard() {
                   <th className="px-4 py-3">Şirket</th>
                   <th className="px-4 py-3">Konum</th>
                   <th className="px-4 py-3">Kaynak</th>
-                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3">Son Başvuru</th>
                   <th className="px-4 py-3">Durum</th>
                   <th className="px-4 py-3"></th>
                 </tr>
@@ -197,7 +219,21 @@ export default function Dashboard() {
                     <td className="px-4 py-3 text-gray-400 max-w-[150px] truncate">{job.company}</td>
                     <td className="px-4 py-3 text-gray-500 max-w-[130px] truncate">{job.location ?? "—"}</td>
                     <td className="px-4 py-3"><SourceBadge source={job.source} /></td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{job.date_found?.slice(0, 10)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {job.deadline ? (
+                        <span className={`text-xs font-medium ${
+                          job.deadline < new Date().toISOString().slice(0, 10)
+                            ? "text-red-500 line-through"
+                            : new Date(job.deadline) <= new Date(Date.now() + 3 * 86400000)
+                            ? "text-orange-400"
+                            : "text-gray-400"
+                        }`}>
+                          {job.deadline}
+                        </span>
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <select
                         value={job.status}
