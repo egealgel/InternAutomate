@@ -74,9 +74,13 @@ class PythiangoScraper(BaseScraper):
             company = paras[0] if paras else "Bilinmiyor"
             description = paras[1] if len(paras) > 1 else None
 
-            # Build a stable dedup URL from title + company slug
-            slug = (title + company).lower().replace(" ", "-")[:60]
-            url = btn_url if btn_url != LISTINGS_URL else f"{LISTINGS_URL}#{slug}"
+            # Real URL if available, otherwise listings page with ASCII query param for dedup
+            if btn_url != LISTINGS_URL:
+                url = btn_url
+            else:
+                import re as _re
+                slug = _re.sub(r"[^a-z0-9-]", "", (title + "-" + company).lower().replace(" ", "-"))[:60]
+                url = f"{LISTINGS_URL}?job={slug}"
 
             jobs.append(
                 JobListing(
