@@ -4,11 +4,9 @@ import { Play, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 import { api, type ScrapeResult } from "../lib/api"
 
 const SOURCES = [
-  { id: "linkedin",   label: "LinkedIn",      color: "bg-blue-600",   working: true },
-  { id: "youthall",  label: "Youthall",       color: "bg-orange-500", working: true },
-  { id: "pythiango", label: "PythianGo",      color: "bg-violet-600", working: true },
-  { id: "kariyer",   label: "Kariyer.net",    color: "bg-teal-600",   working: false },
-  { id: "indeed",    label: "Indeed",         color: "bg-indigo-600", working: false },
+  { id: "linkedin",   label: "LinkedIn",  color: "bg-blue-600"   },
+  { id: "youthall",  label: "Youthall",  color: "bg-orange-500" },
+  { id: "pythiango", label: "PythianGo", color: "bg-violet-600" },
 ]
 
 export default function ScrapeForm() {
@@ -69,28 +67,21 @@ export default function ScrapeForm() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Kaynaklar</label>
           <div className="flex gap-2 flex-wrap">
-            {SOURCES.map(({ id, label, color, working }) => (
+            {SOURCES.map(({ id, label, color }) => (
               <button
                 key={id}
                 type="button"
-                onClick={() => working && toggleSource(id)}
-                title={working ? undefined : "Bot korumalı — çalışmıyor"}
+                onClick={() => toggleSource(id)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border-2 ${
-                  !working
-                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                    : sources.includes(id)
+                  sources.includes(id)
                     ? `${color} text-white border-transparent`
                     : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
                 }`}
               >
                 {label}
-                {!working && <span className="ml-1 text-[10px]">🔒</span>}
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-2">
-            🔒 Bot korumalı kaynaklar seçilemez. Anbean Kampüs bot tespiti nedeniyle desteklenmiyor.
-          </p>
         </div>
 
         <div>
@@ -105,7 +96,7 @@ export default function ScrapeForm() {
               min={1} max={10}
               className="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
-            <span className="text-xs text-gray-400">LinkedIn ~25/sayfa, Indeed/Kariyer ~10/sayfa</span>
+            <span className="text-xs text-gray-400">LinkedIn ~25/sayfa, Youthall ~20/sayfa</span>
           </div>
         </div>
 
