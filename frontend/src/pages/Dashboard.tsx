@@ -67,7 +67,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [q, status, source, dateFilter, page])
+  }, [q, status, source, dateFilter, hideExpired, page])
 
   useEffect(() => { load() }, [load])
   useEffect(() => { setSearchInput(q) }, [q])
