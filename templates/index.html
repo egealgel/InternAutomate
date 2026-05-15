@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}İlan Dashboard — InternAutomate{% endblock %}
+
+{% block content %}
+<!-- Durum özet kartları -->
+<div class="row g-2 mb-3">
+  {% set all_count = status_counts.values() | sum %}
+  <div class="col-auto">
+    <a href="{{ url_for('jobs.index') }}" class="text-decoration-none">
+      <div class="card stat-card {% if not current_status %}border-primary{% endif %}">
+        <div class="card-body py-2 px-3">
+          <div class="stat-num">{{ all_count }}</div>
+          <div class="stat-label">Toplam</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% for s in statuses %}
+  <div class="col-auto">
+    <a href="{{ url_for('jobs.index', status=s) }}" class="text-decoration-none">
+      <div class="card stat-card {% if current_status == s %}border-primary{% endif %}">
+        <div class="card-body py-2 px-3">
+          <div class="stat-num">{{ status_counts.get(s, 0) }}</div>
+          <div class="stat-label">
+            <span class="badge bg-{{ status_colors[s] }}">{{ s }}</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Filtre satırı -->
+<form method="get" action="{{ url_for('jobs.index') }}" class="row g-2 mb-3" id="filterForm">
+  <div class="col-md-3">
+    <input type="text" name="q" class="form-control form-control-sm"
+           placeholder="Başlık, şirket, konum ara..." value="{{ current_q }}">
+  </div>
+  <div class="col-md-2">
+    <select name="source" class="form-select form-select-sm">
+      <option value="">Tüm kaynaklar</option>
+      <option value="linkedin" {% if current_source == 'linkedin' %}selected{% endif %}>LinkedIn</option>
+      <option value="indeed"   {% if current_source == 'indeed'   %}selected{% endif %}>Indeed</option>
+      <option value="kariyer"  {% if current_source == 'kariyer'  %}selected{% endif %}>Kariyer.net</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="status" class="form-select form-select-sm">
+      <option value="">Tüm durumlar</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="date_filter" class="form-select form-select-sm">
+      <option value="">Tüm zamanlar</option>
+      <option value="1d"  {% if current_date_filter == '1d'  %}selected{% endif %}>Son 1 gün</option>
+      <option value="3d"  {% if current_date_filter == '3d'  %}selected{% endif %}>Son 3 gün</option>
+      <option value="7d"  {% if current_date_filter == '7d'  %}selected{% endif %}>Son 7 gün</option>
+      <option value="30d" {% if current_date_filter == '30d' %}selected{% endif %}>Son 30 gün</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">
+      <i class="bi bi-funnel-fill me-1"></i>Filtrele
+    </button>
+    <a href="{{ url_for('jobs.index') }}" class="btn btn-sm btn-outline-secondary ms-1">Temizle</a>
+  </div>
+</form>
+
+<!-- Sonuç sayısı -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <small class="text-muted">{{ total }} ilan bulundu</small>
+  <a href="{{ url_for('jobs.export_csv', status=current_status or '', source=current_source or '') }}"
+     class="btn btn-sm btn-outline-success">
+    <i class="bi bi-file-earmark-spreadsheet me-1"></i>CSV İndir
+  </a>
+</div>
+
+<!-- İlan tablosu -->
+{% if jobs %}
+<div class="table-responsive">
+  <table class="table table-hover table-sm align-middle" id="jobsTable">
+    <thead class="table-dark">
+      <tr>
+        <th class="sortable" data-col="0">#</th>
+        <th class="sortable" data-col="1">Başlık</th>
+        <th class="sortable" data-col="2">Şirket</th>
+        <th class="sortable" data-col="3">Konum</th>
+        <th class="sortable" data-col="4">Kaynak</th>
+        <th class="sortable" data-col="5">Tarih</th>
+        <th class="sortable" data-col="6">Durum</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr data-job-id="{{ job.id }}">
+        <td class="text-muted small">{{ job.id }}</td>
+        <td>
+          <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" class="fw-semibold text-decoration-none">
+            {{ job.title }}
+          </a>
+        </td>
+        <td>{{ job.company }}</td>
+        <td class="text-muted small">{{ job.location or '—' }}</td>
+        <td>
+          <span class="badge source-badge source-{{ job.source }}">{{ job.source }}</span>
+        </td>
+        <td class="text-muted small">
+          {{ job.date_found[:10] if job.date_found else '—' }}
+        </td>
+        <td>
+          <span class="badge bg-{{ status_colors.get(job.status, 'secondary') }}">{{ job.status }}</span>
+        </td>
+        <td>
+          <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}"
+             class="btn btn-xs btn-outline-secondary me-1" title="Detay">
+            <i class="bi bi-eye"></i>
+          </a>
+          <button class="btn btn-xs btn-outline-danger btn-delete" title="Sil"
+                  data-job-id="{{ job.id }}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Sayfalama -->
+{% if pages > 1 %}
+<nav>
+  <ul class="pagination pagination-sm">
+    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('jobs.index', page=page-1, q=current_q, status=current_status or '', source=current_source or '', date_filter=current_date_filter) }}">
+        &laquo; Önceki
+      </a>
+    </li>
+    {% for p in range(1, pages+1) %}
+    <li class="page-item {% if p == page %}active{% endif %}">
+      <a class="page-link" href="{{ url_for('jobs.index', page=p, q=current_q, status=current_status or '', source=current_source or '', date_filter=current_date_filter) }}">
+        {{ p }}
+      </a>
+    </li>
+    {% endfor %}
+    <li class="page-item {% if page == pages %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('jobs.index', page=page+1, q=current_q, status=current_status or '', source=current_source or '', date_filter=current_date_filter) }}">
+        Sonraki &raquo;
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-inbox display-4 d-block mb-3"></i>
+  <p>Henüz ilan yok. <a href="{{ url_for('scrape.scrape_form') }}">İlan taramaya başla →</a></p>
+</div>
+{% endif %}
+{% endblock %}

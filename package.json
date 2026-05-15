@@ -1,0 +1,11 @@
+{
+  "name": "internautomate",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n flask,vite -c blue,green \"python3 app.py\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

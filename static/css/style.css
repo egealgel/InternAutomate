@@ -1,0 +1,40 @@
+/* Status badge colors */
+.bg-secondary { background-color: #6c757d !important; }
+.bg-primary   { background-color: #0d6efd !important; }
+.bg-warning   { background-color: #ffc107 !important; color: #000 !important; }
+.bg-danger    { background-color: #dc3545 !important; }
+.bg-success   { background-color: #198754 !important; }
+
+/* Source badges */
+.source-badge { font-size: 0.75rem; text-transform: capitalize; }
+.source-linkedin { background-color: #0a66c2 !important; color: #fff; }
+.source-indeed   { background-color: #2557a7 !important; color: #fff; }
+.source-kariyer  { background-color: #0d9488 !important; color: #fff; }
+
+/* Stat cards */
+.stat-card { min-width: 80px; cursor: pointer; transition: border-color 0.15s; }
+.stat-card:hover { border-color: #0d6efd !important; }
+.stat-num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 0.75rem; color: #6c757d; margin-top: 2px; }
+
+/* Tiny buttons */
+.btn-xs {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+/* Sortable table headers */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { background: rgba(255,255,255,0.05); }
+th.sort-asc::after  { content: " ▲"; font-size: 0.7em; }
+th.sort-desc::after { content: " ▼"; font-size: 0.7em; }
+
+/* Job description block */
+.job-description {
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}

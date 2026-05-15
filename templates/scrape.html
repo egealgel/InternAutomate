@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}İlan Tara — InternAutomate{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <h4 class="mb-4"><i class="bi bi-search me-2"></i>İlan Tarama</h4>
+
+    <div class="card">
+      <div class="card-body">
+        <form id="scrapeForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Anahtar Kelime</label>
+            <input type="text" name="keywords" class="form-control"
+                   value="{{ default_keywords }}" placeholder="stajyer, yazılım staj...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Şehir / Konum</label>
+            <input type="text" name="location" class="form-control"
+                   value="{{ default_location }}" placeholder="İstanbul, Uzaktan...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kaynaklar</label>
+            <div class="d-flex gap-3 flex-wrap">
+              {% for s in all_sources %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="sources"
+                       value="{{ s }}" id="src_{{ s }}" checked>
+                <label class="form-check-label" for="src_{{ s }}">
+                  <span class="badge source-badge source-{{ s }}">{{ s }}</span>
+                </label>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Sayfa Limiti (kaynak başına)</label>
+            <input type="number" name="max_pages" class="form-control"
+                   value="{{ default_max_pages }}" min="1" max="10" style="width:100px">
+            <div class="form-text">Kariyer/Indeed ~10 ilan/sayfa, LinkedIn ~25 ilan/sayfa</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100" id="scrapeBtn">
+            <i class="bi bi-play-fill me-1"></i>Taramayı Başlat
+          </button>
+        </form>
+
+        <!-- Loading overlay -->
+        <div id="loadingDiv" class="d-none mt-3 text-center">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">İlanlar taranıyor, lütfen bekleyin...</p>
+        </div>
+
+        <!-- Sonuç -->
+        <div id="resultDiv" class="d-none mt-3"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('scrapeForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('scrapeBtn');
+  const loading = document.getElementById('loadingDiv');
+  const resultDiv = document.getElementById('resultDiv');
+
+  btn.disabled = true;
+  loading.classList.remove('d-none');
+  resultDiv.classList.add('d-none');
+
+  const formData = new FormData(this);
+
+  try {
+    const resp = await fetch('/scrape/run', { method: 'POST', body: formData });
+    const data = await resp.json();
+
+    if (data.error) {
+      resultDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+    } else {
+      const errorHtml = data.errors && data.errors.length
+        ? `<div class="mt-2 text-danger small">Hatalar: ${data.errors.join(', ')}</div>`
+        : '';
+      resultDiv.innerHTML = `
+        <div class="alert alert-success">
+          <strong><i class="bi bi-check-circle me-1"></i>Tarama tamamlandı!</strong><br>
+          Toplam bulunan: <strong>${data.total_found}</strong><br>
+          Yeni eklenen: <strong>${data.added}</strong><br>
+          Zaten mevcut: <strong>${data.skipped}</strong>
+          ${errorHtml}
+          <div class="mt-2">
+            <a href="/" class="btn btn-sm btn-primary">
+              <i class="bi bi-table me-1"></i>İlanları Gör
+            </a>
+          </div>
+        </div>`;
+    }
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="alert alert-danger">Bağlantı hatası: ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    loading.classList.add('d-none');
+    resultDiv.classList.remove('d-none');
+  }
+});
+</script>
+{% endblock %}
