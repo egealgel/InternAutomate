@@ -36,7 +36,11 @@ def jobs_list():
         page=max(1, int(request.args.get("page", 1))),
         per_page=int(request.args.get("per_page", 50)),
     )
-    result["status_counts"] = get_status_counts()
+    result["status_counts"] = get_status_counts(
+        source=request.args.get("source") or None,
+        q=request.args.get("q") or None,
+        date_from=_date_from_filter(request.args.get("date_filter")),
+    )
     result["statuses"] = STATUSES
     return jsonify(result)
 
@@ -99,7 +103,7 @@ def scrape_run():
     from database.db import insert_job
     from scrapers import run_all_scrapers
 
-    ALL_SOURCES = ["kariyer", "indeed", "linkedin"]
+    ALL_SOURCES = ["linkedin", "youthall", "pythiango", "kariyer", "indeed"]
     data = request.get_json(force=True)
 
     keywords = (data.get("keywords") or DEFAULT_KEYWORDS).strip()

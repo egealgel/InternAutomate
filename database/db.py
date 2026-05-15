@@ -125,10 +125,27 @@ def delete_job(job_id: int) -> None:
         conn.commit()
 
 
-def get_status_counts() -> Dict[str, int]:
+def get_status_counts(
+    source: Optional[str] = None,
+    q: Optional[str] = None,
+    date_from: Optional[str] = None,
+) -> Dict[str, int]:
+    conditions: List[str] = []
+    params: List[Any] = []
+    if source:
+        conditions.append("source = ?")
+        params.append(source)
+    if q:
+        conditions.append("(title LIKE ? OR company LIKE ? OR location LIKE ?)")
+        like = f"%{q}%"
+        params.extend([like, like, like])
+    if date_from:
+        conditions.append("date_found >= ?")
+        params.append(date_from)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status"
+            f"SELECT status, COUNT(*) as cnt FROM jobs {where} GROUP BY status", params
         ).fetchall()
     return {r["status"]: r["cnt"] for r in rows}
 

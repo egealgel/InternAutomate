@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { Search, Download, Trash2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
 import { api, type Job, type JobsResponse } from "../lib/api"
@@ -25,6 +25,10 @@ export default function Dashboard() {
   const dateFilter = searchParams.get("date_filter") ?? ""
   const page = Number(searchParams.get("page") ?? 1)
 
+  // Local search input state — debounced before updating URL
+  const [searchInput, setSearchInput] = useState(q)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const setParam = (key: string, value: string) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
@@ -33,6 +37,12 @@ export default function Dashboard() {
       if (key !== "page") next.delete("page")
       return next
     })
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setParam("q", value), 350)
   }
 
   const load = useCallback(async () => {
@@ -46,6 +56,9 @@ export default function Dashboard() {
   }, [q, status, source, dateFilter, page])
 
   useEffect(() => { load() }, [load])
+
+  // Sync searchInput when URL param changes externally (e.g. clear button)
+  useEffect(() => { setSearchInput(q) }, [q])
 
   const handleDelete = async (id: number) => {
     if (!confirm("Bu ilanı silmek istediğine emin misin?")) return
@@ -80,8 +93,8 @@ export default function Dashboard() {
           <input
             type="text"
             placeholder="Başlık, şirket, konum..."
-            value={q}
-            onChange={e => setParam("q", e.target.value)}
+            value={searchInput}
+            onChange={e => handleSearchChange(e.target.value)}
             className="pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 w-56"
           />
         </div>
@@ -94,8 +107,6 @@ export default function Dashboard() {
           <option value="linkedin">LinkedIn</option>
           <option value="youthall">Youthall</option>
           <option value="pythiango">PythianGo</option>
-          <option value="kariyer">Kariyer.net</option>
-          <option value="indeed">Indeed</option>
         </select>
         <select
           value={status}
